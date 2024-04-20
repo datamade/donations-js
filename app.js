@@ -17,16 +17,25 @@ const registerServiceWorker = async () => {
   }
 };
 
-const imgSection = document.querySelector("section");
+const textSection = document.querySelector("section");
 
 const fetchData = async () => {
   const time = new Date();
   const url = `data?time=${time}`
   const result = await fetch(url);
-  console.log('fetch')
-  console.log(result)
-  return result;
+  textSection.textContent = await result.text()
 };
 
 registerServiceWorker();
+
+// https://stackoverflow.com/a/62596701
+// seems a better way to do this?
+navigator.serviceWorker.getRegistration().then(function(reg) {
+  // There's an active SW, but no controller for this tab.
+  if (reg.active && !navigator.serviceWorker.controller) {
+    // Perform a soft reload to load everything from the SW and get
+    // a consistent set of resources.
+    window.location.reload();
+  }
+});
 document.getElementById("data_fetch").addEventListener("click", fetchData);

@@ -1,48 +1,17 @@
-const dataFilter = async ({ request, preloadResponsePromise }) => {
-  console.log('request');
-  console.log(request);
-};
 
-const cacheFirst = async ({ request, preloadResponsePromise, fallbackUrl }) => {
+const filterData = async ({ request, preloadResponsePromise  }) => {
   // First try to get the resource from the cache
-  const responseFromCache = await caches.match(request);
-  if (responseFromCache) {
-    return responseFromCache;
-  }
+  const requestUrl = new URL(request.url);
 
-  // Next try to use the preloaded response, if it's there
-  // NOTE: Chrome throws errors regarding preloadResponse, see:
-  // https://bugs.chromium.org/p/chromium/issues/detail?id=1420515
-  // https://github.com/mdn/dom-examples/issues/145
-  // To avoid those errors, remove or comment out this block of preloadResponse
-  // code along with enableNavigationPreload() and the "activate" listener.
-  const preloadResponse = await preloadResponsePromise;
-  if (preloadResponse) {
-    console.info("using preload response", preloadResponse);
-    putInCache(request, preloadResponse.clone());
-    return preloadResponse;
-  }
-
-  // Next try to get the resource from the network
-  try {
-    const responseFromNetwork = await fetch(request.clone());
-    // response may be used only once
-    // we need to save clone to put one copy in cache
-    // and serve second one
-    putInCache(request, responseFromNetwork.clone());
-    return responseFromNetwork;
-  } catch (error) {
-    const fallbackResponse = await caches.match(fallbackUrl);
-    if (fallbackResponse) {
-      return fallbackResponse;
-    }
-    // when even the fallback response is not available,
-    // there is nothing we can do, but we must always
-    // return a Response object
-    return new Response("Network error happened", {
-      status: 408,
-      headers: { "Content-Type": "text/plain" },
-    });
+  if (requestUrl.hostname === self.location.hostname && requestUrl.pathname === "/data") {
+    const params = Object.fromEntries(requestUrl.searchParams);
+    console.log(params);
+    return new Response(JSON.stringify(params),  {headers: { 'Content-Type': 'application/json' }});
+   
+    
+  } else {
+  
+  return fetch(request)
   }
 };
 
@@ -53,31 +22,20 @@ const enableNavigationPreload = async () => {
   }
 };
 
-self.addEventListener("activate", (event) => {
+self.addEventListener('activate', (event) => {
+  event.waitUntil(clients.claim());
   event.waitUntil(enableNavigationPreload());
 });
 
-// self.addEventListener('install', (event) => {
-//   event.waitUntil(
-//     addResourcesToCache([
-//       './',
-//       './index.html',
-//       './style.css',
-//       './app.js',
-//       './image-list.js',
-//       './star-wars-logo.jpg',
-//       './gallery/bountyHunters.jpg',
-//       './gallery/myLittleVader.jpg',
-//       './gallery/snowTroopers.jpg',
-//     ])
-//   );
-// });
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
+});
 
-self.addEventListener("fetch", (event) => {
+self.addEventListener('fetch', (event) => {
   event.respondWith(
-    dataFilter({
+    filterData({
       request: event.request,
       preloadResponsePromise: event.preloadResponse,
-    }),
+    })
   );
 });
