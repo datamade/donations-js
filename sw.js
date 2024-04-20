@@ -1,5 +1,5 @@
 const filterData = async ({ request, preloadResponsePromise }) => {
-  // First try to get the resource from the cache
+
   const requestUrl = new URL(request.url);
 
   if (
@@ -7,7 +7,6 @@ const filterData = async ({ request, preloadResponsePromise }) => {
     requestUrl.pathname === "/data"
   ) {
     const params = Object.fromEntries(requestUrl.searchParams);
-    console.log(params);
     return new Response(JSON.stringify(params), {
       headers: { "Content-Type": "application/json" },
     });

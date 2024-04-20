@@ -21,7 +21,8 @@ const textSection = document.querySelector("section");
 
 const fetchData = async () => {
   const time = new Date();
-  const url = `data?time=${time}`;
+  const url = new URL('/data', window.location.origin);
+  url.searchParams.set('time', time);
   const result = await fetch(url);
   textSection.textContent = await result.text();
 };
